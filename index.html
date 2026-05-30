@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食堂菜单 - 意见反馈</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 标题样式 */
+        .title {
+            text-align: center;
+            color: #d32f2f;
+            margin: 30px 0;
+            font-size: 28px;
+        }
+
+        /* 菜单卡片 */
+        .menu-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-left: 5px solid #d32f2f;
+            padding-left: 10px;
+        }
+
+        /* 菜品列表 */
+        .dish-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .dish-item {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* 反馈表单 */
+        .feedback-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        /* 提示信息 */
+        .success-msg {
+            text-align: center;
+            color: #4caf50;
+            margin-top: 15px;
+            font-size: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🍚 食堂每日菜单 & 意见反馈</h1>
+
+    <!-- 菜单展示区域 -->
+    <div class="menu-card">
+        <h2 class="menu-title">今日菜品</h2>
+        <div class="dish-list">
+            <div class="dish-item">炖牛腩</div>
+            <div class="dish-item">鸡腿</div>
+            <div class="dish-item">排骨</div>
+            <div class="dish-item">炒白菜</div>
+            <div class="dish-item">空心菜</div>
+            <div class="dish-item">豆芽</div>
+            <div class="dish-item">番茄炒蛋</div>
+            <div class="dish-item">蒸蛋</div>
+            <div class="dish-item">玉米碎肉</div>
+        </div>
+    </div>
+
+    <!-- 意见反馈区域 -->
+    <div class="feedback-card">
+        <h2 class="menu-title">💬 意见反馈</h2>
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label>你的称呼</label>
+                <input type="text" id="name" placeholder="请输入你的称呼">
+            </div>
+            <div class="form-group">
+                <label>反馈意见</label>
+                <textarea id="content" placeholder="欢迎对食堂菜品、服务、环境提出宝贵意见"></textarea>
+            </div>
+            <button type="submit" class="submit-btn">提交意见</button>
+            <div class="success-msg" id="successMsg">✅ 意见提交成功！感谢你的反馈</div>
+        </form>
+    </div>
+
+    <script>
+        // 获取表单和提示元素
+        const form = document.getElementById('feedbackForm');
+        const successMsg = document.getElementById('successMsg');
+
+        // 表单提交事件
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // 阻止页面刷新
+            
+            const name = document.getElementById('name').value.trim();
+            const content = document.getElementById('content').value.trim();
+            
+            if(name && content) {
+                // 显示成功提示
+                successMsg.style.display = 'block';
+                // 清空表单
+                form.reset();
+                // 3秒后隐藏提示
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            } else {
+                alert('请填写完整信息！');
+            }
+        });
+    </script>
+</body>
+</html>
