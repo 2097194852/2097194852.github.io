@@ -1,165 +1,18 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>食堂菜单 · 意见反馈</title>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Microsoft YaHei", sans-serif;
-}
-body {
-  background: #f7f7f7;
-  padding: 15px;
-}
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-h1 {
-  color: #d32f2f;
-  font-size: 22px;
-}
-.card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.card-title {
-  font-size: 17px;
-  color: #333;
-  margin-bottom: 12px;
-  border-left: 4px solid #d32f2f;
-  padding-left: 8px;
-}
-.dish-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.dish-item {
-  background: #fafafa;
-  padding: 10px;
-  text-align: center;
-  border-radius: 8px;
-  font-size: 14px;
-}
-input,textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 15px;
-  margin-bottom: 10px;
-}
-textarea {
-  min-height: 90px;
-  resize: none;
-}
-.btn {
-  width: 100%;
-  background: #d32f2f;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 16px;
-  cursor: pointer;
-}
-.btn:active {
-  background: #b71c1c;
-}
-.tip {
-  color: #4caf50;
-  text-align: center;
-  font-size: 14px;
-  display: none;
-  margin: 8px 0;
-}
-.feedback-item {
-  background: #fafafa;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-.feedback-name {
-  font-weight: bold;
-  color: #d32f2f;
-  margin-bottom: 4px;
-}
-.feedback-time {
-  font-size: 12px;
-  color: #888;
-  margin-bottom: 6px;
-}
-.collapse-btn {
-  width: 100%;
-  background: #eee;
-  color: #333;
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 15px;
-  margin-top: 5px;
-  cursor: pointer;
-}
-.collapse-content {
-  display: none;
-  margin-top: 10px;
-}
-.loading {
-  text-align: center;
-  color: #666;
-  padding: 10px;
-}
-</style>
-</head>
-<body>
-
-<header>
-  <h1>🍚 食堂菜单 & 意见反馈</h1>
-</header>
-
-<!-- 菜单区域 -->
-<div class="card">
-  <div class="card-title">今日菜单</div>
-  <div class="loading" id="menuLoading">加载中...</div>
-  <div class="dish-grid" id="dishList"></div>
-
-  <button class="collapse-btn" id="toggleMenuEdit">修改菜单（管理员）</button>
-  <div class="collapse-content" id="menuEditArea">
-    <textarea id="menuInput" placeholder="菜品用英文逗号分隔"></textarea>
-    <button class="btn" id="saveMenuBtn">保存菜单</button>
-    <div class="tip" id="menuTip">菜单更新成功</div>
-  </div>
-</div>
-
-<!-- 提交反馈 -->
-<div class="card">
-  <div class="card-title">💬 提交意见</div>
-  <input type="text" id="userName" placeholder="称呼（可匿名）">
-  <textarea id="userContent" placeholder="请输入意见建议"></textarea>
-  <button class="btn" id="submitBtn">提交反馈</button>
-  <div class="tip" id="submitTip">反馈提交成功</div>
-</div>
-
-<!-- 查看反馈 -->
-<div class="card">
-  <div class="card-title">📋 全部反馈</div>
-  <button class="collapse-btn" id="toggleFeedback">展开查看反馈</button>
-  <div class="collapse-content" id="feedbackArea"></div>
-</div>
-
+<!-- 只替换 <script> 标签内内容，其余代码不动 -->
 <script>
-// 默认初始菜品（保证页面绝不空白）
+const MENU_KEY = "canteen_menu";
+const FEED_KEY = "canteen_feedback";
 const DEFAULT_MENU = "炖牛腩,鸡腿,排骨,炒白菜,空心菜,豆芽,番茄炒蛋,蒸蛋,玉米碎肉";
-let globalMenu = DEFAULT_MENU;
-let globalFeedback = [];
+
+// 初始化本地数据
+function initLocalData() {
+  if (!localStorage.getItem(MENU_KEY)) {
+    localStorage.setItem(MENU_KEY, DEFAULT_MENU);
+  }
+  if (!localStorage.getItem(FEED_KEY)) {
+    localStorage.setItem(FEED_KEY, JSON.stringify([]));
+  }
+}
 
 // 页面元素
 const dishList = document.getElementById('dishList');
@@ -181,26 +34,27 @@ const feedbackArea = document.getElementById('feedbackArea');
 // 渲染菜单
 function renderMenu() {
   menuLoading.style.display = 'none';
+  const menu = localStorage.getItem(MENU_KEY);
+  const dishArr = menu.split(',');
   dishList.innerHTML = '';
-  const dishArr = globalMenu.split(',');
   dishArr.forEach(dish => {
     const div = document.createElement('div');
     div.className = 'dish-item';
     div.innerText = dish.trim();
     dishList.appendChild(div);
   });
-  menuInput.value = globalMenu;
+  menuInput.value = menu;
 }
 
-// 渲染反馈列表
+// 渲染反馈
 function renderFeedback() {
+  const list = JSON.parse(localStorage.getItem(FEED_KEY));
   feedbackArea.innerHTML = '';
-  if (globalFeedback.length === 0) {
+  if (list.length === 0) {
     feedbackArea.innerHTML = '<p style="text-align:center;color:#888;">暂无反馈</p>';
     return;
   }
-  // 最新数据在顶部
-  globalFeedback.slice().reverse().forEach(item => {
+  list.slice().reverse().forEach(item => {
     const div = document.createElement('div');
     div.className = 'feedback-item';
     div.innerHTML = `
@@ -212,7 +66,7 @@ function renderFeedback() {
   });
 }
 
-// 折叠/展开 菜单编辑
+// 菜单编辑展开/收起
 toggleMenuEdit.addEventListener('click', () => {
   menuEditArea.style.display = menuEditArea.style.display === 'block' ? 'none' : 'block';
 });
@@ -221,10 +75,10 @@ toggleMenuEdit.addEventListener('click', () => {
 saveMenuBtn.addEventListener('click', () => {
   const newMenu = menuInput.value.trim();
   if (!newMenu) {
-    alert('菜品内容不能为空！');
+    alert('菜品不能为空！');
     return;
   }
-  globalMenu = newMenu;
+  localStorage.setItem(MENU_KEY, newMenu);
   renderMenu();
   menuTip.style.display = 'block';
   setTimeout(() => menuTip.style.display = 'none', 1500);
@@ -239,7 +93,9 @@ submitBtn.addEventListener('click', () => {
     return;
   }
   const time = new Date().toLocaleString();
-  globalFeedback.push({ name, content, time });
+  const list = JSON.parse(localStorage.getItem(FEED_KEY));
+  list.push({ name, content, time });
+  localStorage.setItem(FEED_KEY, JSON.stringify(list));
   renderFeedback();
   userName.value = '';
   userContent.value = '';
@@ -247,17 +103,15 @@ submitBtn.addEventListener('click', () => {
   setTimeout(() => submitTip.style.display = 'none', 1500);
 });
 
-// 折叠/展开 反馈列表
+// 反馈列表展开/收起
 toggleFeedback.addEventListener('click', () => {
   feedbackArea.style.display = feedbackArea.style.display === 'block' ? 'none' : 'block';
 });
 
-// 页面初始化（保底渲染，绝不空白）
+// 初始化运行
 window.onload = function() {
+  initLocalData();
   renderMenu();
   renderFeedback();
 };
 </script>
-
-</body>
-</html>
