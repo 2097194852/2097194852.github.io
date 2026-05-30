@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<!-- 关键：移动端适配 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>食堂菜单 · 意见反馈</title>
 <style>
@@ -10,7 +9,7 @@
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family:"Microsoft YaHei",sans-serif;
+  font-family:Arial,"Microsoft YaHei",sans-serif;
 }
 body {
   background:#f7f7f7;
@@ -38,7 +37,6 @@ h1 {
   border-left:4px solid #d32f2f;
   padding-left:8px;
 }
-/* 菜品网格：手机两列 */
 .dish-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -98,7 +96,6 @@ textarea {
   color:#888;
   margin-bottom:6px;
 }
-/* 折叠面板 */
 .collapse-btn {
   width:100%;
   background:#eee;
@@ -121,25 +118,25 @@ textarea {
   <h1>🍚 食堂菜单 & 意见反馈</h1>
 </header>
 
-<!-- 今日菜单 -->
+<!-- 菜单 -->
 <div class="card">
   <div class="card-title">今日菜单</div>
   <div class="dish-grid" id="dishList"></div>
   <button class="collapse-btn" id="toggleMenuEdit">修改菜单（管理员）</button>
   <div class="collapse-content" id="menuEditArea">
-    <textarea id="menuInput" placeholder="用英文逗号分隔菜品，例如：炖牛腩,鸡腿"></textarea>
+    <textarea id="menuInput" placeholder="用英文逗号分隔菜品"></textarea>
     <button class="btn" id="saveMenuBtn">保存菜单</button>
-    <div class="tip" id="menuTip">菜单已更新</div>
+    <div class="tip" id="menuTip">菜单已同步更新</div>
   </div>
 </div>
 
 <!-- 提交意见 -->
 <div class="card">
   <div class="card-title">💬 提交意见</div>
-  <input type="text" id="userName" placeholder="你的称呼（选填可匿名）">
-  <textarea id="userContent" placeholder="请输入意见或建议..."></textarea>
+  <input type="text" id="userName" placeholder="你的称呼（可匿名）">
+  <textarea id="userContent" placeholder="请输入意见或建议"></textarea>
   <button class="btn" id="submitBtn">提交反馈</button>
-  <div class="tip" id="submitTip">反馈提交成功</div>
+  <div class="tip" id="submitTip">反馈已同步提交</div>
 </div>
 
 <!-- 查看反馈 -->
@@ -150,42 +147,76 @@ textarea {
 </div>
 
 <script>
-// 本地存储key
-const MENU_KEY = "canteen_menu";
-const FEED_KEY = "canteen_feedback";
-const defaultMenu = "炖牛腩,鸡腿,排骨,炒白菜,空心菜,豆芽,番茄炒蛋,蒸蛋,玉米碎肉";
+// ==============================================
+// 🔥 全局同步 API（免费公共服务，所有人数据互通）
+// ==============================================
+const API = "https://api.jsonbin.io/v3/b/66f12fbead19ca34f8acb37f";
+const API_KEY = "$2a$10$U1eCu2wJ0HwZgEJqH6G6e.7Q4sN0s1aG7tT8zUJzH0T0g0G0G0G0G";
 
-// 初始化
-if (!localStorage.getItem(MENU_KEY)) localStorage.setItem(MENU_KEY, defaultMenu);
-if (!localStorage.getItem(FEED_KEY)) localStorage.setItem(FEED_KEY, JSON.stringify([]));
+// 初始化数据
+async function initData() {
+  let res = await fetch(API, { headers: { "X-Master-Key": API_KEY } });
+  let data = await res.json();
+  return data.record;
+}
 
-// 渲染菜单
-function renderMenu(){
-  let dishes = localStorage.getItem(MENU_KEY).split(",");
+// 保存数据
+async function saveData(newData) {
+  await fetch(API, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Master-Key": API_KEY
+    },
+    body: JSON.stringify(newData)
+  });
+}
+
+// ==============================================
+// 渲染菜单（全局同步）
+// ==============================================
+async function renderMenu() {
+  let data = await initData();
+  let dishes = data.menu.split(",");
   dishList.innerHTML = "";
-  dishes.forEach(d=>{
+  dishes.forEach(d => {
     let div = document.createElement("div");
     div.className = "dish-item";
     div.innerText = d.trim();
     dishList.appendChild(div);
   });
-  menuInput.value = localStorage.getItem(MENU_KEY);
+  menuInput.value = data.menu;
 }
 
-// 渲染反馈
-function renderFeedback(){
-  let list = JSON.parse(localStorage.getItem(FEED_KEY));
+// ==============================================
+// 保存菜单（全局同步）
+// ==============================================
+saveMenuBtn.onclick = async () => {
+  let val = menuInput.value.trim();
+  if (!val) return alert("菜品不能为空");
+  let data = await initData();
+  data.menu = val;
+  await saveData(data);
+  await renderMenu();
+  menuTip.style.display = "block";
+  setTimeout(() => menuTip.style.display = "none", 1500);
+};
+
+// ==============================================
+// 渲染反馈（全局同步）
+// ==============================================
+async function renderFeedback() {
+  let data = await initData();
   feedbackArea.innerHTML = "";
-  if (list.length===0) {
-    feedbackArea.innerHTML = "<p style='text-align:center;color:#888;'>暂无反馈</p>";
+  if (data.feedback.length === 0) {
+    feedbackArea.innerHTML = "<p style='text-align:center;color:#888'>暂无反馈</p>";
     return;
   }
-  // 最新在前
-  list.reverse().forEach(item=>{
+  data.feedback.reverse().forEach(item => {
     let div = document.createElement("div");
     div.className = "feedback-item";
     div.innerHTML = `
-      <div class="feedback-name">${item.name||"匿名"}</div>
+      <div class="feedback-name">${item.name || "匿名"}</div>
       <div class="feedback-time">${item.time}</div>
       <div>${item.content}</div>
     `;
@@ -193,46 +224,37 @@ function renderFeedback(){
   });
 }
 
-// 折叠：修改菜单
-toggleMenuEdit.addEventListener("click",()=>{
-  menuEditArea.style.display = menuEditArea.style.display === "block" ? "none" : "block";
-});
-
-// 保存菜单
-saveMenuBtn.addEventListener("click",()=>{
-  let val = menuInput.value.trim();
-  if (!val) return alert("菜品不能为空");
-  localStorage.setItem(MENU_KEY, val);
-  renderMenu();
-  menuTip.style.display = "block";
-  setTimeout(()=>menuTip.style.display="none",1500);
-});
-
-// 提交反馈
-submitBtn.addEventListener("click",()=>{
+// ==============================================
+// 提交反馈（全局同步）
+// ==============================================
+submitBtn.onclick = async () => {
   let name = userName.value.trim();
   let content = userContent.value.trim();
   if (!content) return alert("请填写反馈内容");
   let time = new Date().toLocaleString();
-  let list = JSON.parse(localStorage.getItem(FEED_KEY));
-  list.push({name,content,time});
-  localStorage.setItem(FEED_KEY, JSON.stringify(list));
-  renderFeedback();
+  let data = await initData();
+  data.feedback.push({ name, content, time });
+  await saveData(data);
+  await renderFeedback();
   userName.value = "";
   userContent.value = "";
   submitTip.style.display = "block";
-  setTimeout(()=>submitTip.style.display="none",1500);
-});
+  setTimeout(() => submitTip.style.display = "none", 1500);
+};
 
-// 折叠：查看反馈
-toggleFeedback.addEventListener("click",()=>{
+// ==============================================
+// 折叠面板
+// ==============================================
+toggleMenuEdit.onclick = () => {
+  menuEditArea.style.display = menuEditArea.style.display === "block" ? "none" : "block";
+};
+toggleFeedback.onclick = () => {
   feedbackArea.style.display = feedbackArea.style.display === "block" ? "none" : "block";
-});
+};
 
-// 初始渲染
+// 启动
 renderMenu();
 renderFeedback();
 </script>
-
 </body>
 </html>
