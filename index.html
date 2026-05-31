@@ -1,117 +1,183 @@
-<!-- 只替换 <script> 标签内内容，其余代码不动 -->
-<script>
-const MENU_KEY = "canteen_menu";
-const FEED_KEY = "canteen_feedback";
-const DEFAULT_MENU = "炖牛腩,鸡腿,排骨,炒白菜,空心菜,豆芽,番茄炒蛋,蒸蛋,玉米碎肉";
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食堂菜单 - 意见反馈</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
 
-// 初始化本地数据
-function initLocalData() {
-  if (!localStorage.getItem(MENU_KEY)) {
-    localStorage.setItem(MENU_KEY, DEFAULT_MENU);
-  }
-  if (!localStorage.getItem(FEED_KEY)) {
-    localStorage.setItem(FEED_KEY, JSON.stringify([]));
-  }
-}
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-// 页面元素
-const dishList = document.getElementById('dishList');
-const menuLoading = document.getElementById('menuLoading');
-const menuInput = document.getElementById('menuInput');
-const toggleMenuEdit = document.getElementById('toggleMenuEdit');
-const menuEditArea = document.getElementById('menuEditArea');
-const saveMenuBtn = document.getElementById('saveMenuBtn');
-const menuTip = document.getElementById('menuTip');
+        /* 标题样式 */
+        .title {
+            text-align: center;
+            color: #d32f2f;
+            margin: 30px 0;
+            font-size: 28px;
+        }
 
-const userName = document.getElementById('userName');
-const userContent = document.getElementById('userContent');
-const submitBtn = document.getElementById('submitBtn');
-const submitTip = document.getElementById('submitTip');
+        /* 菜单卡片 */
+        .menu-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-const toggleFeedback = document.getElementById('toggleFeedback');
-const feedbackArea = document.getElementById('feedbackArea');
+        .menu-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-left: 5px solid #d32f2f;
+            padding-left: 10px;
+        }
 
-// 渲染菜单
-function renderMenu() {
-  menuLoading.style.display = 'none';
-  const menu = localStorage.getItem(MENU_KEY);
-  const dishArr = menu.split(',');
-  dishList.innerHTML = '';
-  dishArr.forEach(dish => {
-    const div = document.createElement('div');
-    div.className = 'dish-item';
-    div.innerText = dish.trim();
-    dishList.appendChild(div);
-  });
-  menuInput.value = menu;
-}
+        /* 菜品列表 */
+        .dish-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
 
-// 渲染反馈
-function renderFeedback() {
-  const list = JSON.parse(localStorage.getItem(FEED_KEY));
-  feedbackArea.innerHTML = '';
-  if (list.length === 0) {
-    feedbackArea.innerHTML = '<p style="text-align:center;color:#888;">暂无反馈</p>';
-    return;
-  }
-  list.slice().reverse().forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'feedback-item';
-    div.innerHTML = `
-      <div class="feedback-name">${item.name || '匿名'}</div>
-      <div class="feedback-time">${item.time}</div>
-      <div>${item.content}</div>
-    `;
-    feedbackArea.appendChild(div);
-  });
-}
+        .dish-item {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
 
-// 菜单编辑展开/收起
-toggleMenuEdit.addEventListener('click', () => {
-  menuEditArea.style.display = menuEditArea.style.display === 'block' ? 'none' : 'block';
-});
+        /* 反馈表单 */
+        .feedback-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-// 保存菜单
-saveMenuBtn.addEventListener('click', () => {
-  const newMenu = menuInput.value.trim();
-  if (!newMenu) {
-    alert('菜品不能为空！');
-    return;
-  }
-  localStorage.setItem(MENU_KEY, newMenu);
-  renderMenu();
-  menuTip.style.display = 'block';
-  setTimeout(() => menuTip.style.display = 'none', 1500);
-});
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-// 提交反馈
-submitBtn.addEventListener('click', () => {
-  const name = userName.value.trim();
-  const content = userContent.value.trim();
-  if (!content) {
-    alert('请填写反馈内容！');
-    return;
-  }
-  const time = new Date().toLocaleString();
-  const list = JSON.parse(localStorage.getItem(FEED_KEY));
-  list.push({ name, content, time });
-  localStorage.setItem(FEED_KEY, JSON.stringify(list));
-  renderFeedback();
-  userName.value = '';
-  userContent.value = '';
-  submitTip.style.display = 'block';
-  setTimeout(() => submitTip.style.display = 'none', 1500);
-});
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
 
-// 反馈列表展开/收起
-toggleFeedback.addEventListener('click', () => {
-  feedbackArea.style.display = feedbackArea.style.display === 'block' ? 'none' : 'block';
-});
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+        }
 
-// 初始化运行
-window.onload = function() {
-  initLocalData();
-  renderMenu();
-  renderFeedback();
-};
-</script>
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        /* 提示信息 */
+        .success-msg {
+            text-align: center;
+            color: #4caf50;
+            margin-top: 15px;
+            font-size: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🍚 食堂每日菜单 & 意见反馈</h1>
+
+    <!-- 菜单展示区域 -->
+    <div class="menu-card">
+        <h2 class="menu-title">今日菜品</h2>
+        <div class="dish-list">
+            <div class="dish-item">炖牛腩</div>
+            <div class="dish-item">鸡腿</div>
+            <div class="dish-item">排骨</div>
+            <div class="dish-item">炒白菜</div>
+            <div class="dish-item">空心菜</div>
+            <div class="dish-item">豆芽</div>
+            <div class="dish-item">番茄炒蛋</div>
+            <div class="dish-item">蒸蛋</div>
+            <div class="dish-item">玉米碎肉</div>
+        </div>
+    </div>
+
+    <!-- 意见反馈区域 -->
+    <div class="feedback-card">
+        <h2 class="menu-title">💬 意见反馈</h2>
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label>你的称呼</label>
+                <input type="text" id="name" placeholder="请输入你的称呼">
+            </div>
+            <div class="form-group">
+                <label>反馈意见</label>
+                <textarea id="content" placeholder="欢迎对食堂菜品、服务、环境提出宝贵意见"></textarea>
+            </div>
+            <button type="submit" class="submit-btn">提交意见</button>
+            <div class="success-msg" id="successMsg">✅ 意见提交成功！感谢你的反馈</div>
+        </form>
+    </div>
+
+    <script>
+        // 获取表单和提示元素
+        const form = document.getElementById('feedbackForm');
+        const successMsg = document.getElementById('successMsg');
+
+        // 表单提交事件
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // 阻止页面刷新
+            
+            const name = document.getElementById('name').value.trim();
+            const content = document.getElementById('content').value.trim();
+            
+            if(name && content) {
+                // 显示成功提示
+                successMsg.style.display = 'block';
+                // 清空表单
+                form.reset();
+                // 3秒后隐藏提示
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 3000);
+            } else {
+                alert('请填写完整信息！');
+            }
+        });
+    </script>
+</body>
+</html>
