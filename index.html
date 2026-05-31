@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>食堂菜单 - 意见反馈</title>
+    <title>食堂菜单 - 意见反馈管理系统</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             padding: 30px;
@@ -29,8 +29,38 @@
         .title {
             text-align: center;
             color: #2c3e50;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 26px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #3498db;
+            color: #fff;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+        }
+
+        .nav-btn.admin {
+            background: #e67e22;
+        }
+
+        .nav-btn.admin:hover {
+            background: #d35400;
         }
 
         /* 菜单样式 */
@@ -60,7 +90,7 @@
             font-size: 15px;
         }
 
-        /* 表单样式 */
+        /* 表单通用样式 */
         .form-group {
             margin-bottom: 20px;
         }
@@ -99,89 +129,290 @@
             background: #219a52;
         }
 
+        .btn-del {
+            background: #e74c3c;
+        }
+
+        .btn-del:hover {
+            background: #c0392b;
+        }
+
         .tip {
             color: #7f8c8d;
             font-size: 13px;
             margin-top: 5px;
         }
+
+        /* 模块切换 */
+        .module {
+            display: none;
+        }
+
+        .module.active {
+            display: block;
+        }
+
+        /* 反馈列表 */
+        .feedback-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #3498db;
+        }
+
+        .feedback-item p {
+            margin: 6px 0;
+        }
+
+        /* 菜单编辑区 */
+        .edit-dish-group {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0;
+            align-items: center;
+        }
+
+        .edit-dish-group input {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">🍽️ 食堂每日菜单 & 意见反馈</h1>
+        <h1 class="title">🍽️ 食堂菜单 & 意见反馈系统</h1>
 
-        <!-- 菜单展示区域 -->
-        <div class="menu-section">
-            <h2 class="section-title">荤菜</h2>
-            <div class="dish-list">
-                <div class="dish-item">炖牛腩</div>
-                <div class="dish-item">鸡腿</div>
-                <div class="dish-item">排骨</div>
+        <!-- 导航栏 -->
+        <div class="nav">
+            <button class="nav-btn" onclick="switchModule('menuView')">查看菜单</button>
+            <button class="nav-btn" onclick="switchModule('feedbackAdd')">我要反馈</button>
+            <button class="nav-btn admin" onclick="switchModule('adminLogin')">管理员入口</button>
+        </div>
+
+        <!-- 1. 普通用户 - 菜单查看 -->
+        <div id="menuView" class="module active">
+            <div class="menu-section">
+                <h2 class="section-title">荤菜</h2>
+                <div class="dish-list" id="meatList"></div>
+            </div>
+            <div class="menu-section">
+                <h2 class="section-title">素菜</h2>
+                <div class="dish-list" id="vegList"></div>
+            </div>
+            <div class="menu-section">
+                <h2 class="section-title">蒸菜/蛋类</h2>
+                <div class="dish-list" id="eggList"></div>
             </div>
         </div>
 
-        <div class="menu-section">
-            <h2 class="section-title">素菜</h2>
-            <div class="dish-list">
-                <div class="dish-item">炒白菜</div>
-                <div class="dish-item">空心菜</div>
-                <div class="dish-item">豆芽</div>
+        <!-- 2. 普通用户 - 提交反馈 -->
+        <div id="feedbackAdd" class="module">
+            <div class="menu-section">
+                <h2 class="section-title">📢 投诉 / 提建议</h2>
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label>称呼</label>
+                        <input type="text" id="name" placeholder="请输入姓名/学号">
+                    </div>
+                    <div class="form-group">
+                        <label>反馈类型</label>
+                        <input type="text" id="feedType" placeholder="投诉 / 建议">
+                    </div>
+                    <div class="form-group">
+                        <label>详细内容</label>
+                        <textarea id="content" placeholder="请描述具体内容..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">提交反馈</button>
+                    <p class="tip">提交成功后工作人员会及时查看</p>
+                </form>
             </div>
         </div>
 
-        <div class="menu-section">
-            <h2 class="section-title">蒸菜/蛋类</h2>
-            <div class="dish-list">
-                <div class="dish-item">番茄炒蛋</div>
-                <div class="dish-item">蒸蛋</div>
-                <div class="dish-item">玉米碎肉</div>
+        <!-- 3. 管理员登录 -->
+        <div id="adminLogin" class="module">
+            <div class="menu-section">
+                <h2 class="section-title">管理员登录</h2>
+                <div class="form-group">
+                    <label>管理员密码</label>
+                    <input type="password" id="adminPwd" placeholder="默认密码：123456">
+                </div>
+                <button class="btn" onclick="adminLogin()">登录管理后台</button>
             </div>
         </div>
 
-        <!-- 投诉建议表单 -->
-        <div class="menu-section">
-            <h2 class="section-title">📢 投诉 / 提建议</h2>
-            <form id="feedbackForm">
-                <div class="form-group">
-                    <label>你的称呼</label>
-                    <input type="text" id="name" placeholder="请输入名字/学号">
-                </div>
+        <!-- 4. 管理员 - 查看所有反馈 -->
+        <div id="adminFeedList" class="module">
+            <div class="menu-section">
+                <h2 class="section-title">📋 全部投诉/建议记录</h2>
+                <div id="allFeedback"></div>
+            </div>
+            <button class="btn" style="margin-bottom:20px" onclick="switchModule('adminMenuEdit')">前往修改菜单</button>
+            <button class="btn btn-del" onclick="logoutAdmin()">退出后台</button>
+        </div>
 
-                <div class="form-group">
-                    <label>反馈类型</label>
-                    <input type="text" id="type" placeholder="投诉 / 建议">
-                </div>
-
-                <div class="form-group">
-                    <label>详细内容</label>
-                    <textarea id="content" placeholder="请详细描述你要投诉或建议的内容..."></textarea>
-                </div>
-
-                <button type="submit" class="btn">提交反馈</button>
-                <p class="tip">提交后信息会临时保存，刷新页面清空（如需后台存储可告诉我）</p>
-            </form>
+        <!-- 5. 管理员 - 编辑菜单 -->
+        <div id="adminMenuEdit" class="module">
+            <div class="menu-section">
+                <h2 class="section-title">✏️ 编辑荤菜</h2>
+                <div id="editMeat"></div>
+                <button class="btn" onclick="addDish('meat')">新增荤菜</button>
+            </div>
+            <div class="menu-section">
+                <h2 class="section-title">✏️ 编辑素菜</h2>
+                <div id="editVeg"></div>
+                <button class="btn" onclick="addDish('veg')">新增素菜</button>
+            </div>
+            <div class="menu-section">
+                <h2 class="section-title">✏️ 编辑蒸菜/蛋类</h2>
+                <div id="editEgg"></div>
+                <button class="btn" onclick="addDish('egg')">新增菜品</button>
+            </div>
+            <button class="btn" onclick="saveMenu()">保存菜单修改</button>
+            <button class="btn btn-del" style="margin-left:10px" onclick="logoutAdmin()">退出后台</button>
         </div>
     </div>
 
     <script>
-        // 表单提交功能
-        const form = document.getElementById('feedbackForm');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); // 阻止页面刷新
+        // 初始化默认菜单数据
+        const defaultMenu = {
+            meat: ["炖牛腩", "鸡腿", "排骨"],
+            veg: ["炒白菜", "空心菜", "豆芽"],
+            egg: ["番茄炒蛋", "蒸蛋", "玉米碎肉"]
+        };
+        let menuData = JSON.parse(localStorage.getItem("canteenMenu")) || defaultMenu;
+        let feedbackList = JSON.parse(localStorage.getItem("canteenFeedback")) || [];
+        const ADMIN_PWD = "123456"; // 管理员密码
 
-            const name = document.getElementById('name').value.trim();
-            const type = document.getElementById('type').value.trim();
-            const content = document.getElementById('content').value.trim();
+        // 模块切换
+        function switchModule(id) {
+            document.querySelectorAll(".module").forEach(el => el.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+        }
 
-            if (!name || !type || !content) {
-                alert('请填写完整信息！');
+        // 渲染前台菜单
+        function renderMenu() {
+            const meatDom = document.getElementById("meatList");
+            const vegDom = document.getElementById("vegList");
+            const eggDom = document.getElementById("eggList");
+
+            meatDom.innerHTML = menuData.meat.map(item => `<div class="dish-item">${item}</div>`).join("");
+            vegDom.innerHTML = menuData.veg.map(item => `<div class="dish-item">${item}</div>`).join("");
+            eggDom.innerHTML = menuData.egg.map(item => `<div class="dish-item">${item}</div>`).join("");
+        }
+
+        // 渲染管理员编辑菜单
+        function renderEditMenu() {
+            function renderGroup(type, domId) {
+                let html = "";
+                menuData[type].forEach((item, idx) => {
+                    html += `
+                    <div class="edit-dish-group">
+                        <input type="text" value="${item}" data-type="${type}" data-index="${idx}">
+                        <button class="btn btn-del" onclick="delDish('${type}',${idx})">删除</button>
+                    </div>`;
+                });
+                document.getElementById(domId).innerHTML = html;
+            }
+            renderGroup("meat", "editMeat");
+            renderGroup("veg", "editVeg");
+            renderGroup("egg", "editEgg");
+        }
+
+        // 新增菜品
+        function addDish(type) {
+            menuData[type].push("新菜品");
+            renderEditMenu();
+        }
+
+        // 删除菜品
+        function delDish(type, idx) {
+            menuData[type].splice(idx, 1);
+            renderEditMenu();
+        }
+
+        // 保存菜单
+        function saveMenu() {
+            // 读取编辑框内容
+            document.querySelectorAll(".edit-dish-group input").forEach(input => {
+                const t = input.dataset.type;
+                const i = Number(input.dataset.index);
+                menuData[t][i] = input.value.trim();
+            });
+            localStorage.setItem("canteenMenu", JSON.stringify(menuData));
+            renderMenu();
+            alert("菜单保存成功！");
+            switchModule("menuView");
+        }
+
+        // 渲染反馈列表（管理员）
+        function renderFeedback() {
+            const dom = document.getElementById("allFeedback");
+            if (feedbackList.length === 0) {
+                dom.innerHTML = "<p>暂无投诉与建议记录</p>";
                 return;
             }
+            let html = "";
+            feedbackList.forEach((item, idx) => {
+                html += `
+                <div class="feedback-item">
+                    <p><strong>称呼：</strong>${item.name}</p>
+                    <p><strong>类型：</strong>${item.type}</p>
+                    <p><strong>内容：</strong>${item.content}</p>
+                    <p><strong>时间：</strong>${item.time}</p>
+                    <button class="btn btn-del" onclick="delFeedback(${idx})">删除本条记录</button>
+                </div>`;
+            });
+            dom.innerHTML = html;
+        }
 
-            // 模拟提交成功
-            alert('提交成功！感谢你的反馈，我们会尽快处理～');
-            form.reset(); // 清空表单
+        // 删除单条反馈
+        function delFeedback(idx) {
+            feedbackList.splice(idx, 1);
+            localStorage.setItem("canteenFeedback", JSON.stringify(feedbackList));
+            renderFeedback();
+        }
+
+        // 管理员登录
+        function adminLogin() {
+            const pwd = document.getElementById("adminPwd").value.trim();
+            if (pwd === ADMIN_PWD) {
+                alert("登录成功，进入管理后台");
+                renderFeedback();
+                switchModule("adminFeedList");
+            } else {
+                alert("密码错误！");
+            }
+        }
+
+        // 退出管理员
+        function logoutAdmin() {
+            document.getElementById("adminPwd").value = "";
+            switchModule("menuView");
+        }
+
+        // 用户提交反馈
+        document.getElementById("feedbackForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const name = document.getElementById("name").value.trim();
+            const type = document.getElementById("feedType").value.trim();
+            const content = document.getElementById("content").value.trim();
+
+            if (!name || !type || !content) {
+                alert("请填写完整信息！");
+                return;
+            }
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+            feedbackList.push({ name, type, content, time: timeStr });
+            localStorage.setItem("canteenFeedback", JSON.stringify(feedbackList));
+            alert("反馈提交成功，感谢您的建议！");
+            this.reset();
         });
+
+        // 页面初始化
+        window.onload = function() {
+            renderMenu();
+        }
     </script>
 </body>
 </html>
